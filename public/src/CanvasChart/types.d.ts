@@ -4,19 +4,23 @@ export namespace NCanvasChart {
     [key: string]: Array<number>
   }
   type Options = {
-    lines?: number
     height: number
     width: number
     type?: Type
     padding?: number
     legendSpace?: number
-    xLabelsSpace?: number
+    yLabelsSpace?: number
     drawXLines?: boolean
     drawYLines?: boolean
+    yLabelDigits?: number
+    lineSpace?: number
   }
   type XLabels = Array<string>
+  type YLabels = Array<number>
   type Point = [number, number]
   type Line = Array<Point>
+  type TextAlignX = 'start' | 'left' | 'end' | 'right' | 'center'
+  type TextAlignY = 'bottom' | 'top' | "middle"
   interface Config {
     series?: Series
     options: Options
