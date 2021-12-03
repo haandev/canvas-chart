@@ -1,16 +1,13 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "module": "es6",
-        "declaration": false,
-        "noImplicitAny": false,
-        "removeComments": true,
-        "noLib": false
-    },
-    "include": [
-        "**/*"
-    ],
-    "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
-    ]}
+  "compilerOptions": {
+    "target": "es5",
+    "module": "es6",
+    "declaration": false,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "noLib": false,
+    "lib": ["es2017", "dom"]
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
