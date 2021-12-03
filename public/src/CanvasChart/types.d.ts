@@ -20,11 +20,12 @@ export namespace NCanvasChart {
   type Point = [number, number]
   type Line = Array<Point>
   type TextAlignX = 'start' | 'left' | 'end' | 'right' | 'center'
-  type TextAlignY = 'bottom' | 'top' | "middle"
+  type TextAlignY = 'bottom' | 'top' | 'middle'
   interface Config {
     series?: Series
     options: Options
     xLabels: XLabels
+    colors?: Array<string>
   }
   interface Interface extends Config {}
 }

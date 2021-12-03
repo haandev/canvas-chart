@@ -1,10 +1,12 @@
 import { NCanvasChart } from './types'
 
 class CanvasChart {
-  private series: NCanvasChart.Series
-  private options: NCanvasChart.Options
+  public series: NCanvasChart.Series
+  public options: NCanvasChart.Options
+  public colors: Array<string>
+  public xLabels: NCanvasChart.XLabels
+
   private lineCount: number
-  private xLabels: NCanvasChart.XLabels
   private yLabels: NCanvasChart.YLabels
   private longestSerieLength: number
   private highestValue: number
@@ -14,9 +16,12 @@ class CanvasChart {
   private rendered: boolean
   private xLines: Array<NCanvasChart.Line>
   private yLines: Array<NCanvasChart.Line>
+  private xStep: number
+  private yAxisScale: number
 
   constructor(config: NCanvasChart.Interface) {
-    const { series, options } = config
+    const { series, options, colors } = config
+    this.colors = colors
     this.series = series
     this.options = {
       ...options,
@@ -26,8 +31,8 @@ class CanvasChart {
       type: options.type || 'line',
       legendSpace: options.legendSpace || 50,
       yLabelsSpace: options.yLabelsSpace || 25,
-      drawXLines: options.drawXLines || true,
-      drawYLines: options.drawYLines || false,
+      drawYLines: options.drawYLines || true,
+      drawXLines: options.drawXLines || false,
       yLabelDigits: options.yLabelDigits || 2,
       lineSpace: options.lineSpace || 10,
     }
@@ -35,6 +40,7 @@ class CanvasChart {
     this.highestValue = this.calculateLHighestValue()
     this.canvasElement = document.createElement('canvas')
     this.renderingContext = this.canvasElement.getContext('2d')
+    this.yAxisScale = 1 / 10 ** (this.options.yLabelDigits - 1)
   }
 
   private calculateLongestSerie() {
@@ -64,6 +70,17 @@ class CanvasChart {
     yOffset: number
   ): NCanvasChart.Point {
     return [point[0] + xOffset, point[1] + yOffset]
+  }
+  private mapValueToY(value: number): number {
+    const gridHeight =
+      this.xLines[this.xLines.length - 1][0][1] - this.xLines[0][0][1]
+    const topValue = Number(this.yLabels[0])
+    const actualSpaceYSize =
+      gridHeight * ((topValue - value * this.yAxisScale) / topValue)
+    return this.options.padding + actualSpaceYSize
+  }
+  private mapStepToX(step: number): number {
+    return step * this.xStep + this.options.yLabelsSpace + this.options.padding
   }
 
   private drawLine(
@@ -108,15 +125,16 @@ class CanvasChart {
     const highestValueCustomDigits = Number(
       String(this.highestValue).slice(0, this.options.yLabelDigits)
     )
+    const actualLineSpace = this.options.lineSpace * this.yAxisScale
     let next =
-      Math.ceil(
-        highestValueCustomDigits / 10 ** (this.options.yLabelDigits - 1)
-      ) *
-      10 ** (this.options.yLabelDigits - 1)
+      Math.ceil(highestValueCustomDigits * this.yAxisScale) / this.yAxisScale
     const yLabels = []
+    if (next % actualLineSpace !== 0) {
+      next = next + actualLineSpace
+    }
     while (next >= 0) {
       yLabels.push(next)
-      next = next - this.options.lineSpace
+      next = next - actualLineSpace
     }
     this.yLabels = yLabels
     this.xLines.forEach((line, index) => {
@@ -124,7 +142,7 @@ class CanvasChart {
     })
   }
 
-  private drawXLines() {
+  private drawYLines() {
     const step =
       (this.options.height -
         2 * this.options.padding -
@@ -142,38 +160,47 @@ class CanvasChart {
             this.options.padding + index * step,
           ],
         ]
-        if (index === 0 || this.options.drawXLines)
+        if (index === 0 || this.options.drawYLines)
           this.drawLine(line as Array<NCanvasChart.Point>, 'gray', 0.5)
         return line
       }
     )
   }
-  private drawYLines() {
+
+  private drawXLines() {
     const step =
       (this.options.width -
         2 * this.options.padding -
         this.options.yLabelsSpace) /
-      this.longestSerieLength
-
-    this.yLines = Array.from({ length: this.lineCount }, (_, i) => i).map(
-      (index: number) => {
-        const line: NCanvasChart.Line = [
-          [
-            this.options.padding + this.options.yLabelsSpace + index * step,
-            this.options.padding,
-          ],
-          [
-            this.options.padding + this.options.yLabelsSpace + index * step,
-            this.options.height -
-              this.options.padding -
-              this.options.legendSpace,
-          ],
-        ]
-        if (this.options.drawYLines)
-          this.drawLine(line as Array<NCanvasChart.Point>, 'silver', 0)
-        return line
-      }
-    )
+      (this.longestSerieLength - 1)
+    this.xStep = step
+    this.yLines = Array.from(
+      { length: this.longestSerieLength },
+      (_, i) => i
+    ).map((index: number) => {
+      const line: NCanvasChart.Line = [
+        [
+          this.options.padding + this.options.yLabelsSpace + index * step,
+          this.options.padding,
+        ],
+        [
+          this.options.padding + this.options.yLabelsSpace + index * step,
+          this.options.height - this.options.padding - this.options.legendSpace,
+        ],
+      ]
+      if (this.options.drawXLines)
+        this.drawLine(line as Array<NCanvasChart.Point>, 'silver', 0)
+      return line
+    })
+  }
+  
+  private drawSeries() {
+    Object.values(this.series).forEach((serie, serieIndex) => {
+      const line: NCanvasChart.Line = serie.map((value, pointIndex) => {
+        return [this.mapStepToX(pointIndex), this.mapValueToY(value)]
+      })
+      this.drawLine(line, this.colors[serieIndex] || 'black')
+    })
   }
 
   render(canvasContainerId: string) {
@@ -188,9 +215,10 @@ class CanvasChart {
     this.initializeDimensions()
     this.calculateLHighestValue()
     this.calculateLineCount()
-    this.drawXLines()
     this.drawYLines()
+    this.drawXLines()
     this.drawYLabels()
+    this.drawSeries()
     this.rendered = true
     this.canvasContainer.innerHTML = ''
     this.canvasContainer.appendChild(this.canvasElement)
