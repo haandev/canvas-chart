@@ -1,14 +1,14 @@
 import CanvasChart from './src/CanvasChart/index.js';
 var canvas = new CanvasChart({
     options: {
-        lines: 5,
-        width: 500,
-        height: 200,
-        type: 'line',
+        width: 700,
+        height: 300,
     },
     series: {
-        price: [10, 20, 5, 30, 50],
-        cost: [10, 50, 1, 4, 70],
+        s1: [3, 34, 21, 4],
+        s2: [23, 4, 7, 15],
+        s3: [12, 9, 5, 23],
     },
+    xLabels: ['d1', 'd2', 'd3', 'd4'],
 });
 canvas.render('chart-container');
