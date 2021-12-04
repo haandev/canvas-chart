@@ -1,5 +1,5 @@
 import { NCanvasChart } from './types'
-import { num2sup } from './../utils/index.js'
+import { num2sup, closestNumber } from './../utils/index.js'
 class CanvasChart {
   public series: NCanvasChart.Series
   public options: NCanvasChart.Options
@@ -36,7 +36,7 @@ class CanvasChart {
       drawYLines: options.drawYLines || true,
       drawXLines: options.drawXLines || false,
       yLabelDigits: options.yLabelDigits || 2,
-      lineSpace: options.lineSpace || 10,
+      lineCount: options.lineCount || 8,
       barChartOptions: {
         ...options.barChartOptions,
         serieMargin: options.barChartOptions?.serieMargin || 5,
@@ -48,6 +48,7 @@ class CanvasChart {
     this.canvasElement = document.createElement('canvas')
     this.renderingContext = this.canvasElement.getContext('2d')
     this.calculateLHighestValue()
+    this.calculateTopValue()
     this.calculateLineCount()
   }
 
@@ -63,19 +64,43 @@ class CanvasChart {
       )
     )
   }
+  private calculateTopValue() {
+    if (this.options.lineSpace) {
+      const topValue =
+        this.highestValue % this.options.lineSpace === 0
+          ? this.highestValue
+          : this.highestValue +
+            (this.options.lineSpace -
+              (this.highestValue % this.options.lineSpace))
+      this.topValue = topValue
+    } else {
+      let mul = 1
+      const steps = [1, 2.5, 5, 7.5, 10]
+      let highs = steps.map((s) => s * 10 ** mul)
+      const expectedLineSpace = this.highestValue / this.options.lineCount
+      /* positive way */
+      while (expectedLineSpace > Math.max(...highs)) {
+        mul++
+        highs = steps.map((s) => s * 10 ** mul)
+      }
+
+      /* close to zero */
+      while (expectedLineSpace < Math.min(...highs)) {
+        mul++
+        highs = steps.map((s) => s / 10 ** mul)
+      }
+
+      const divider = closestNumber(expectedLineSpace, highs)
+
+      this.options.lineSpace = divider
+      this.topValue = divider * this.options.lineCount
+    }
+  }
   private calculateLineCount() {
-    //TODO: this can be automatic, optional
-    const topValue =
-      this.highestValue % this.options.lineSpace === 0
-        ? this.highestValue
-        : this.highestValue +
-          (this.options.lineSpace -
-            (this.highestValue % this.options.lineSpace))
-    this.topValue = topValue
-    const topValueDigits = String(topValue).length
+    const topValueDigits = String(this.topValue).length
     this.yAxisScale = 1 / 10 ** (topValueDigits - this.options.yLabelDigits)
 
-    this.lineCount = topValue / this.options.lineSpace
+    this.lineCount = this.topValue / this.options.lineSpace
   }
   private initializeDimensions() {
     this.canvasElement.width = this.options.width
@@ -275,7 +300,15 @@ class CanvasChart {
       iconMargin,
       xMargin
     )
-    let legendPointer = (this.options.width-this.options.yLabelsSpace-this.options.padding - legendWidth) / 2 + xMargin + this.options.yLabelsSpace+this.options.padding
+    let legendPointer =
+      (this.options.width -
+        this.options.yLabelsSpace -
+        this.options.padding -
+        legendWidth) /
+        2 +
+      xMargin +
+      this.options.yLabelsSpace +
+      this.options.padding
     const labels = Object.keys(this.series)
     const legendY = this.options.height - 15
     labels.forEach((label, index) => {
@@ -305,7 +338,15 @@ class CanvasChart {
       iconMargin,
       xMargin
     )
-    let legendPointer = (this.options.width-this.options.yLabelsSpace-this.options.padding - legendWidth) / 2 + xMargin + this.options.yLabelsSpace+this.options.padding
+    let legendPointer =
+      (this.options.width -
+        this.options.yLabelsSpace -
+        this.options.padding -
+        legendWidth) /
+        2 +
+      xMargin +
+      this.options.yLabelsSpace +
+      this.options.padding
     const labels = Object.keys(this.series)
     const legendY = this.options.height - 15
     labels.forEach((label, index) => {

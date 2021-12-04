@@ -13,6 +13,7 @@ export namespace NCanvasChart {
     drawYLines?: boolean
     yLabelDigits?: number
     lineSpace?: number
+    lineCount?: number
     barChartOptions?: {
       serieMargin: number
       stepPadding: number

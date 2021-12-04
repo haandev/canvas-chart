@@ -18,7 +18,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import { num2sup } from './../utils/index.js';
+import { num2sup, closestNumber } from './../utils/index.js';
 var CanvasChart = (function () {
     function CanvasChart(config) {
         var _a, _b;
@@ -26,12 +26,13 @@ var CanvasChart = (function () {
         this.colors = colors;
         this.series = series;
         this.xLabels = xLabels;
-        this.options = __assign(__assign({}, options), { width: options.width || 500, height: options.height || 150, padding: options.padding || 10, legendSpace: options.legendSpace || 50, yLabelsSpace: options.yLabelsSpace || 50, drawYLines: options.drawYLines || true, drawXLines: options.drawXLines || false, yLabelDigits: options.yLabelDigits || 2, lineSpace: options.lineSpace || 10, barChartOptions: __assign(__assign({}, options.barChartOptions), { serieMargin: ((_a = options.barChartOptions) === null || _a === void 0 ? void 0 : _a.serieMargin) || 5, stepPadding: ((_b = options.barChartOptions) === null || _b === void 0 ? void 0 : _b.stepPadding) || 15 }) });
+        this.options = __assign(__assign({}, options), { width: options.width || 500, height: options.height || 150, padding: options.padding || 10, legendSpace: options.legendSpace || 50, yLabelsSpace: options.yLabelsSpace || 50, drawYLines: options.drawYLines || true, drawXLines: options.drawXLines || false, yLabelDigits: options.yLabelDigits || 2, lineCount: options.lineCount || 8, barChartOptions: __assign(__assign({}, options.barChartOptions), { serieMargin: ((_a = options.barChartOptions) === null || _a === void 0 ? void 0 : _a.serieMargin) || 5, stepPadding: ((_b = options.barChartOptions) === null || _b === void 0 ? void 0 : _b.stepPadding) || 15 }) });
         this.longestSerieLength = this.calculateLongestSerie();
         this.highestValue = this.calculateLHighestValue();
         this.canvasElement = document.createElement('canvas');
         this.renderingContext = this.canvasElement.getContext('2d');
         this.calculateLHighestValue();
+        this.calculateTopValue();
         this.calculateLineCount();
     }
     CanvasChart.prototype.calculateLongestSerie = function () {
@@ -42,16 +43,38 @@ var CanvasChart = (function () {
             return Math.max.apply(Math, currentSerie);
         }));
     };
+    CanvasChart.prototype.calculateTopValue = function () {
+        if (this.options.lineSpace) {
+            var topValue = this.highestValue % this.options.lineSpace === 0
+                ? this.highestValue
+                : this.highestValue +
+                    (this.options.lineSpace -
+                        (this.highestValue % this.options.lineSpace));
+            this.topValue = topValue;
+        }
+        else {
+            var mul_1 = 1;
+            var steps = [1, 2.5, 5, 7.5, 10];
+            var highs = steps.map(function (s) { return s * Math.pow(10, mul_1); });
+            var expectedLineSpace = this.highestValue / this.options.lineCount;
+            while (expectedLineSpace > Math.max.apply(Math, highs)) {
+                mul_1++;
+                highs = steps.map(function (s) { return s * Math.pow(10, mul_1); });
+            }
+            while (expectedLineSpace < Math.min.apply(Math, highs)) {
+                mul_1++;
+                highs = steps.map(function (s) { return s / Math.pow(10, mul_1); });
+            }
+            var divider = closestNumber(expectedLineSpace, highs);
+            console.log(expectedLineSpace, divider, highs);
+            this.options.lineSpace = divider;
+            this.topValue = divider * this.options.lineCount;
+        }
+    };
     CanvasChart.prototype.calculateLineCount = function () {
-        var topValue = this.highestValue % this.options.lineSpace === 0
-            ? this.highestValue
-            : this.highestValue +
-                (this.options.lineSpace -
-                    (this.highestValue % this.options.lineSpace));
-        this.topValue = topValue;
-        var topValueDigits = String(topValue).length;
+        var topValueDigits = String(this.topValue).length;
         this.yAxisScale = 1 / Math.pow(10, (topValueDigits - this.options.yLabelDigits));
-        this.lineCount = topValue / this.options.lineSpace;
+        this.lineCount = this.topValue / this.options.lineSpace;
     };
     CanvasChart.prototype.initializeDimensions = function () {
         this.canvasElement.width = this.options.width;
@@ -208,7 +231,14 @@ var CanvasChart = (function () {
         var _this = this;
         var _a = [30, 5, 20], iconWidth = _a[0], iconMargin = _a[1], xMargin = _a[2];
         var legendWidth = this.calculateLegendWidth(iconWidth, iconMargin, xMargin);
-        var legendPointer = (this.options.width - this.options.yLabelsSpace - this.options.padding - legendWidth) / 2 + xMargin + this.options.yLabelsSpace + this.options.padding;
+        var legendPointer = (this.options.width -
+            this.options.yLabelsSpace -
+            this.options.padding -
+            legendWidth) /
+            2 +
+            xMargin +
+            this.options.yLabelsSpace +
+            this.options.padding;
         var labels = Object.keys(this.series);
         var legendY = this.options.height - 15;
         labels.forEach(function (label, index) {
@@ -225,7 +255,14 @@ var CanvasChart = (function () {
         var _this = this;
         var _a = [12, 5, 20], iconWidth = _a[0], iconMargin = _a[1], xMargin = _a[2];
         var legendWidth = this.calculateLegendWidth(iconWidth, iconMargin, xMargin);
-        var legendPointer = (this.options.width - this.options.yLabelsSpace - this.options.padding - legendWidth) / 2 + xMargin + this.options.yLabelsSpace + this.options.padding;
+        var legendPointer = (this.options.width -
+            this.options.yLabelsSpace -
+            this.options.padding -
+            legendWidth) /
+            2 +
+            xMargin +
+            this.options.yLabelsSpace +
+            this.options.padding;
         var labels = Object.keys(this.series);
         var legendY = this.options.height - 15;
         labels.forEach(function (label, index) {
