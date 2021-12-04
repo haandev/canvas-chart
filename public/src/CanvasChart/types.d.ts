@@ -6,7 +6,6 @@ export namespace NCanvasChart {
   type Options = {
     height: number
     width: number
-    type?: Type
     padding?: number
     legendSpace?: number
     yLabelsSpace?: number
@@ -14,10 +13,15 @@ export namespace NCanvasChart {
     drawYLines?: boolean
     yLabelDigits?: number
     lineSpace?: number
+    barChartOptions?: {
+      serieMargin: number
+      stepPadding: number
+    }
   }
   type XLabels = Array<string>
   type YLabels = Array<number>
   type Point = [number, number]
+  type Rectangle = [Point, Point]
   type Line = Array<Point>
   type TextAlignX = 'start' | 'left' | 'end' | 'right' | 'center'
   type TextAlignY = 'bottom' | 'top' | 'middle'

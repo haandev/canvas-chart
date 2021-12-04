@@ -18,17 +18,21 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
+import { num2sup } from './../utils/index.js';
 var CanvasChart = (function () {
     function CanvasChart(config) {
-        var series = config.series, options = config.options, colors = config.colors;
+        var _a, _b;
+        var series = config.series, options = config.options, colors = config.colors, xLabels = config.xLabels;
         this.colors = colors;
         this.series = series;
-        this.options = __assign(__assign({}, options), { width: options.width || 500, height: options.height || 150, padding: options.padding || 10, type: options.type || 'line', legendSpace: options.legendSpace || 50, yLabelsSpace: options.yLabelsSpace || 25, drawYLines: options.drawYLines || true, drawXLines: options.drawXLines || false, yLabelDigits: options.yLabelDigits || 2, lineSpace: options.lineSpace || 10 });
+        this.xLabels = xLabels;
+        this.options = __assign(__assign({}, options), { width: options.width || 500, height: options.height || 150, padding: options.padding || 10, legendSpace: options.legendSpace || 50, yLabelsSpace: options.yLabelsSpace || 50, drawYLines: options.drawYLines || true, drawXLines: options.drawXLines || false, yLabelDigits: options.yLabelDigits || 2, lineSpace: options.lineSpace || 10, barChartOptions: __assign(__assign({}, options.barChartOptions), { serieMargin: ((_a = options.barChartOptions) === null || _a === void 0 ? void 0 : _a.serieMargin) || 5, stepPadding: ((_b = options.barChartOptions) === null || _b === void 0 ? void 0 : _b.stepPadding) || 15 }) });
         this.longestSerieLength = this.calculateLongestSerie();
         this.highestValue = this.calculateLHighestValue();
         this.canvasElement = document.createElement('canvas');
         this.renderingContext = this.canvasElement.getContext('2d');
-        this.yAxisScale = 1 / Math.pow(10, (this.options.yLabelDigits - 1));
+        this.calculateLHighestValue();
+        this.calculateLineCount();
     }
     CanvasChart.prototype.calculateLongestSerie = function () {
         return Math.max.apply(Math, Object.values(this.series).map(function (currentSerie) { return currentSerie.length; }));
@@ -39,23 +43,51 @@ var CanvasChart = (function () {
         }));
     };
     CanvasChart.prototype.calculateLineCount = function () {
-        this.lineCount = this.highestValue / this.options.lineSpace + 1;
+        var topValue = this.highestValue % this.options.lineSpace === 0
+            ? this.highestValue
+            : this.highestValue +
+                (this.options.lineSpace -
+                    (this.highestValue % this.options.lineSpace));
+        console.log(topValue);
+        this.topValue = topValue;
+        var topValueDigits = String(topValue).length;
+        this.yAxisScale = 1 / Math.pow(10, (topValueDigits - this.options.yLabelDigits));
+        this.lineCount = topValue / this.options.lineSpace;
     };
     CanvasChart.prototype.initializeDimensions = function () {
         this.canvasElement.width = this.options.width;
         this.canvasElement.height = this.options.height;
+        this.yStep =
+            (this.options.height -
+                2 * this.options.padding -
+                this.options.legendSpace) /
+                this.lineCount;
+        this.xStep =
+            (this.options.width -
+                2 * this.options.padding -
+                this.options.yLabelsSpace) /
+                this.longestSerieLength;
     };
     CanvasChart.prototype.offsetPoint = function (point, xOffset, yOffset) {
         return [point[0] + xOffset, point[1] + yOffset];
     };
     CanvasChart.prototype.mapValueToY = function (value) {
-        var gridHeight = this.xLines[this.xLines.length - 1][0][1] - this.xLines[0][0][1];
+        var gridHeight = this.yLines[this.yLines.length - 1][0][1] - this.yLines[0][0][1];
         var topValue = Number(this.yLabels[0]);
         var actualSpaceYSize = gridHeight * ((topValue - value * this.yAxisScale) / topValue);
         return this.options.padding + actualSpaceYSize;
     };
     CanvasChart.prototype.mapStepToX = function (step) {
-        return step * this.xStep + this.options.yLabelsSpace + this.options.padding;
+        return (step * this.xStep +
+            this.options.yLabelsSpace +
+            this.options.padding +
+            this.xStep / 2);
+    };
+    CanvasChart.prototype.drawRectangle = function (rectangle, color) {
+        var _a;
+        if (color === void 0) { color = 'black'; }
+        this.renderingContext.fillStyle = color;
+        (_a = this.renderingContext).fillRect.apply(_a, __spreadArray(__spreadArray([], rectangle[0], false), rectangle[1], false));
     };
     CanvasChart.prototype.drawLine = function (line, color, width) {
         var _a;
@@ -89,11 +121,29 @@ var CanvasChart = (function () {
         };
         (_a = this.renderingContext).fillText.apply(_a, __spreadArray([text], this.offsetPoint(point, 0, offsetMapper[alignY]), false));
     };
+    CanvasChart.prototype.drawYLines = function () {
+        var _this = this;
+        this.yLines = Array.from({ length: this.lineCount + 1 }, function (_, i) { return i; }).map(function (index) {
+            var line = [
+                [
+                    _this.options.padding + _this.options.yLabelsSpace,
+                    _this.options.padding + index * _this.yStep,
+                ],
+                [
+                    _this.options.width - _this.options.padding,
+                    _this.options.padding + index * _this.yStep,
+                ],
+            ];
+            if (index === 0 || _this.options.drawYLines)
+                _this.drawLine(line, 'gray', 0.5);
+            return line;
+        });
+    };
     CanvasChart.prototype.drawYLabels = function () {
         var _this = this;
-        var highestValueCustomDigits = Number(String(this.highestValue).slice(0, this.options.yLabelDigits));
+        var highestValueCustomDigits = Number(String(this.topValue).slice(0, this.options.yLabelDigits));
         var actualLineSpace = this.options.lineSpace * this.yAxisScale;
-        var next = Math.ceil(highestValueCustomDigits * this.yAxisScale) / this.yAxisScale;
+        var next = highestValueCustomDigits;
         var yLabels = [];
         if (next % actualLineSpace !== 0) {
             next = next + actualLineSpace;
@@ -102,48 +152,28 @@ var CanvasChart = (function () {
             yLabels.push(next);
             next = next - actualLineSpace;
         }
+        console.log('yScale', this.yAxisScale);
+        var sup = this.yAxisScale !== 1
+            ? '*10' +
+                num2sup(String(Math.log10(1 / this.yAxisScale) === 1
+                    ? ''
+                    : Math.log10(1 / this.yAxisScale)))
+            : '';
         this.yLabels = yLabels;
-        this.xLines.forEach(function (line, index) {
-            _this.drawText(String(yLabels[index]), _this.offsetPoint(line[0], -10, 0));
-        });
-    };
-    CanvasChart.prototype.drawYLines = function () {
-        var _this = this;
-        var step = (this.options.height -
-            2 * this.options.padding -
-            this.options.legendSpace) /
-            this.lineCount;
-        this.xLines = Array.from({ length: this.lineCount + 1 }, function (_, i) { return i; }).map(function (index) {
-            var line = [
-                [
-                    _this.options.padding + _this.options.yLabelsSpace,
-                    _this.options.padding + index * step,
-                ],
-                [
-                    _this.options.width - _this.options.padding,
-                    _this.options.padding + index * step,
-                ],
-            ];
-            if (index === 0 || _this.options.drawYLines)
-                _this.drawLine(line, 'gray', 0.5);
-            return line;
+        this.yLines.forEach(function (line, index) {
+            _this.drawText(String(yLabels[index] + (yLabels[index] !== 0 ? sup : '')), _this.offsetPoint(line[0], -10, 0));
         });
     };
     CanvasChart.prototype.drawXLines = function () {
         var _this = this;
-        var step = (this.options.width -
-            2 * this.options.padding -
-            this.options.yLabelsSpace) /
-            (this.longestSerieLength - 1);
-        this.xStep = step;
-        this.yLines = Array.from({ length: this.longestSerieLength }, function (_, i) { return i; }).map(function (index) {
+        this.xLines = Array.from({ length: this.longestSerieLength }, function (_, i) { return i; }).map(function (index) {
             var line = [
                 [
-                    _this.options.padding + _this.options.yLabelsSpace + index * step,
+                    _this.options.padding + _this.options.yLabelsSpace + index * _this.xStep,
                     _this.options.padding,
                 ],
                 [
-                    _this.options.padding + _this.options.yLabelsSpace + index * step,
+                    _this.options.padding + _this.options.yLabelsSpace + index * _this.xStep,
                     _this.options.height - _this.options.padding - _this.options.legendSpace,
                 ],
             ];
@@ -152,7 +182,16 @@ var CanvasChart = (function () {
             return line;
         });
     };
-    CanvasChart.prototype.drawSeries = function () {
+    CanvasChart.prototype.drawXLabels = function () {
+        var _this = this;
+        this.xLabels.forEach(function (label, step) {
+            _this.drawText(label, [
+                _this.mapStepToX(step),
+                _this.options.padding + (_this.yLines.length - 1) * _this.yStep + 5,
+            ], 'black', 12, 'center', 'top');
+        });
+    };
+    CanvasChart.prototype.drawSeriesLineChart = function () {
         var _this = this;
         Object.values(this.series).forEach(function (serie, serieIndex) {
             var line = serie.map(function (value, pointIndex) {
@@ -161,19 +200,97 @@ var CanvasChart = (function () {
             _this.drawLine(line, _this.colors[serieIndex] || 'black');
         });
     };
-    CanvasChart.prototype.render = function (canvasContainerId) {
+    CanvasChart.prototype.calculateLegendWidth = function (iconWidth, iconMargin, xMargin) {
+        this.renderingContext.font = "12px Arial";
+        var labels = Object.keys(this.series);
+        return (this.renderingContext.measureText(labels.join('')).width +
+            labels.length * (xMargin * 2 + iconMargin + iconWidth));
+    };
+    CanvasChart.prototype.drawLegendLineChart = function () {
+        var _this = this;
+        var _a = [30, 5, 20], iconWidth = _a[0], iconMargin = _a[1], xMargin = _a[2];
+        var legendWidth = this.calculateLegendWidth(iconWidth, iconMargin, xMargin);
+        var legendPointer = (this.options.width - this.options.yLabelsSpace - this.options.padding - legendWidth) / 2 + xMargin + this.options.yLabelsSpace + this.options.padding;
+        var labels = Object.keys(this.series);
+        var legendY = this.options.height - 15;
+        labels.forEach(function (label, index) {
+            _this.drawLine([
+                [legendPointer, legendY],
+                [legendPointer + iconWidth, legendY],
+            ], _this.colors[index]);
+            legendPointer += iconWidth + iconMargin;
+            _this.drawText(label, [legendPointer, legendY], 'black', 12, 'start', 'middle');
+            legendPointer += _this.renderingContext.measureText(label).width + xMargin;
+        });
+    };
+    CanvasChart.prototype.drawLegendBarChart = function () {
+        var _this = this;
+        var _a = [12, 5, 20], iconWidth = _a[0], iconMargin = _a[1], xMargin = _a[2];
+        var legendWidth = this.calculateLegendWidth(iconWidth, iconMargin, xMargin);
+        var legendPointer = (this.options.width - this.options.yLabelsSpace - this.options.padding - legendWidth) / 2 + xMargin + this.options.yLabelsSpace + this.options.padding;
+        var labels = Object.keys(this.series);
+        var legendY = this.options.height - 15;
+        labels.forEach(function (label, index) {
+            _this.drawRectangle([
+                [legendPointer, legendY],
+                [iconWidth, 12],
+            ], _this.colors[index]);
+            legendPointer += iconWidth + iconMargin;
+            _this.drawText(label, [legendPointer, legendY], 'black', 12, 'start', 'top');
+            legendPointer += _this.renderingContext.measureText(label).width + xMargin;
+        });
+    };
+    CanvasChart.prototype.drawSeriesBarChart = function () {
+        var _this = this;
+        var seriesCount = Object.values(this.series).length;
+        var stepWidth = this.xStep - 2 * this.options.barChartOptions.stepPadding;
+        var barWidth = (stepWidth -
+            (seriesCount - 1) * this.options.barChartOptions.serieMargin) /
+            seriesCount;
+        var barOffset = barWidth + this.options.barChartOptions.serieMargin;
+        var xOffsetNumber = (-1 * stepWidth) / 2;
+        console.log(seriesCount, stepWidth, barWidth, xOffsetNumber, barOffset);
+        Object.values(this.series).forEach(function (serie, serieIndex) {
+            serie.forEach(function (value, pointIndex) {
+                _this.drawRectangle([
+                    [
+                        _this.mapStepToX(pointIndex) +
+                            xOffsetNumber +
+                            barOffset * serieIndex,
+                        _this.mapValueToY(value),
+                    ],
+                    [
+                        barWidth,
+                        _this.yLines[_this.yLines.length - 1][0][1] -
+                            _this.mapValueToY(value),
+                    ],
+                ], _this.colors[serieIndex]);
+            });
+        });
+    };
+    CanvasChart.prototype.render = function (canvasContainerId, type) {
         this.canvasContainer = document.getElementById(canvasContainerId);
         if (!this.canvasContainer) {
             console.log('A container element with the ID you specified was not found.');
             return;
         }
         this.initializeDimensions();
-        this.calculateLHighestValue();
-        this.calculateLineCount();
         this.drawYLines();
         this.drawXLines();
         this.drawYLabels();
-        this.drawSeries();
+        this.drawXLabels();
+        switch (type) {
+            case 'bar':
+                this.drawSeriesBarChart();
+                this.drawLegendBarChart();
+                break;
+            case 'line':
+                this.drawSeriesLineChart();
+                this.drawLegendLineChart();
+                break;
+            default:
+                break;
+        }
         this.rendered = true;
         this.canvasContainer.innerHTML = '';
         this.canvasContainer.appendChild(this.canvasElement);
