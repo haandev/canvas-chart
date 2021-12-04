@@ -66,7 +66,6 @@ var CanvasChart = (function () {
                 highs = steps.map(function (s) { return s / Math.pow(10, mul_1); });
             }
             var divider = closestNumber(expectedLineSpace, highs);
-            console.log(expectedLineSpace, divider, highs);
             this.options.lineSpace = divider;
             this.topValue = divider * this.options.lineCount;
         }
