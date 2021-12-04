@@ -48,7 +48,6 @@ var CanvasChart = (function () {
             : this.highestValue +
                 (this.options.lineSpace -
                     (this.highestValue % this.options.lineSpace));
-        console.log(topValue);
         this.topValue = topValue;
         var topValueDigits = String(topValue).length;
         this.yAxisScale = 1 / Math.pow(10, (topValueDigits - this.options.yLabelDigits));
@@ -152,7 +151,6 @@ var CanvasChart = (function () {
             yLabels.push(next);
             next = next - actualLineSpace;
         }
-        console.log('yScale', this.yAxisScale);
         var sup = this.yAxisScale !== 1
             ? '*10' +
                 num2sup(String(Math.log10(1 / this.yAxisScale) === 1
@@ -249,7 +247,6 @@ var CanvasChart = (function () {
             seriesCount;
         var barOffset = barWidth + this.options.barChartOptions.serieMargin;
         var xOffsetNumber = (-1 * stepWidth) / 2;
-        console.log(seriesCount, stepWidth, barWidth, xOffsetNumber, barOffset);
         Object.values(this.series).forEach(function (serie, serieIndex) {
             serie.forEach(function (value, pointIndex) {
                 _this.drawRectangle([

@@ -6,10 +6,35 @@
   </head>
   <body>
     <div id="chart-container"></div>
+    <div style="margin: 30px">
+      <button onclick="javascript:handleChart1()">Chart 1</button>
+      <button onclick="javascript:handleChart2()">Chart 2</button>
+      <button onclick="javascript:handleYourChartBar()">Your Chart Bar</button>
+      <button onclick="javascript:handleYourChartLine()">
+        Your Chart Line
+      </button>
+    </div>
+    <p>Configure the json object and click one of "Your Chart" buttons</p>
+    <textarea id="your-chart-code" cols="100" rows="30">
+{
+  "options": {
+    "width": 700,
+    "height": 300,
+    "lineSpace": 100
+  },
+  "series": {
+    "s1": [304, 34, 21, 40, 34],
+    "s2": [74, 542, 7, 400, 542],
+    "s3": [12, 125, 789, 230, 125]
+  },
+  "colors": ["#5e9ec5", "#e97d39", "#a5a5a5"],
+  "xLabels": ["d1", "d2", "d3", "d4","d5"]
+}
+    </textarea>
     <script type="module">
       import CanvasChart from './src/CanvasChart/index.js'
 
-      const canvas = new CanvasChart({
+      const chart1 = new CanvasChart({
         options: {
           width: 700,
           height: 300,
@@ -24,7 +49,41 @@
         xLabels: ['d1', 'd2', 'd3', 'd4'],
       })
 
-      canvas.render('chart-container', 'bar')
+      const chart2 = new CanvasChart({
+        options: {
+          width: 700,
+          height: 300,
+          lineSpace: 25,
+        },
+        series: {
+          s1: [27, 34, 98, 8],
+          s2: [27, 12, 5, 61],
+          s3: [19, 32, 8, 23],
+        },
+        colors: ['#5eaac5', '#e97dff', '#a5bba5'],
+        xLabels: ['d1', 'd2', 'd3', 'd4'],
+      })
+
+      chart1.render('chart-container', 'bar')
+
+      window.handleChart1 = () => {
+        chart1.render('chart-container', 'bar')
+      }
+      window.handleChart2 = () => {
+        chart2.render('chart-container', 'line')
+      }
+      window.handleYourChartBar = () => {
+        const yourChartCode = document.getElementById('your-chart-code').value
+        const yourChartObject = JSON.parse(yourChartCode)
+        const chart = new CanvasChart(yourChartObject)
+        chart.render('chart-container', 'bar')
+      }
+      window.handleYourChartLine = () => {
+        const yourChartCode = document.getElementById('your-chart-code').value
+        const yourChartObject = JSON.parse(yourChartCode)
+        const chart = new CanvasChart(yourChartObject)
+        chart.render('chart-container', 'line')
+      }
     </script>
   </body>
 </html>

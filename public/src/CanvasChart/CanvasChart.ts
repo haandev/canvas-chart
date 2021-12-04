@@ -71,7 +71,6 @@ class CanvasChart {
         : this.highestValue +
           (this.options.lineSpace -
             (this.highestValue % this.options.lineSpace))
-    console.log(topValue)
     this.topValue = topValue
     const topValueDigits = String(topValue).length
     this.yAxisScale = 1 / 10 ** (topValueDigits - this.options.yLabelDigits)
@@ -193,7 +192,6 @@ class CanvasChart {
       yLabels.push(next)
       next = next - actualLineSpace
     }
-    console.log('yScale', this.yAxisScale)
 
     const sup =
       this.yAxisScale !== 1
@@ -340,7 +338,6 @@ class CanvasChart {
 
     const barOffset = barWidth + this.options.barChartOptions.serieMargin
     const xOffsetNumber = (-1 * stepWidth) / 2
-    console.log(seriesCount, stepWidth, barWidth, xOffsetNumber, barOffset)
     Object.values(this.series).forEach((serie, serieIndex) => {
       serie.forEach((value, pointIndex) => {
         this.drawRectangle(
