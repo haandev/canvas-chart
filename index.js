@@ -11,3 +11,4 @@ console.log(
     `\nRunning on environment: 8081`+
     `\nClick to go: http://localhost:8081`
 );
+require("open")("http://localhost:8081")
