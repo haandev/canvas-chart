@@ -1,0 +1,1 @@
+export {num2sup} from "./num2sup.js";
