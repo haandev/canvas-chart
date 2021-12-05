@@ -26,23 +26,7 @@ class CanvasChart {
     this.colors = colors
     this.series = series
     this.xLabels = xLabels
-   /*  this.options = {
-      ...options,
-      width: options.width || 500,
-      height: options.height || 150,
-      padding: options.padding || 10,
-      legendSpace: options.legendSpace || 50,
-      yLabelsSpace: options.yLabelsSpace || 50,
-      drawYLines: options.drawYLines || true,
-      drawXLines: options.drawXLines || false,
-      yLabelDigits: options.yLabelDigits || 2,
-      lineCount: options.lineCount || 8,
-      barChartOptions: {
-        ...options.barChartOptions,
-        serieMargin: options.barChartOptions?.serieMargin || 5,
-        stepPadding: options.barChartOptions?.stepPadding || 15,
-      },
-    } */
+
     this.options = objectDefaults(options,{
       width:500,
       height:150,
@@ -57,7 +41,6 @@ class CanvasChart {
         serieMargin:5,
         stepMargin:15
       }
-
     })
     this.longestSerieLength = this.calculateLongestSerie()
     this.highestValue = this.calculateLHighestValue()
