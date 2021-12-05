@@ -26,20 +26,20 @@ class CanvasChart {
     this.colors = colors
     this.series = series
     this.xLabels = xLabels
-
     this.options = objectDefaults(options, {
       width: 500,
       height: 150,
       padding: 10,
       legendSpace: 50,
-      yLabelSpace: 50,
-      drawYlines: true,
+      yLabelsSpace: 50,
+      drawYLines: true,
       drawXLines: false,
       yLabelDigits: 2,
       lineCount: 8,
+      lineSpace: false,
       barChartOptions: {
         serieMargin: 5,
-        stepMargin: 15,
+        stepPadding: 15,
       },
     })
     this.longestSerieLength = this.calculateLongestSerie()
