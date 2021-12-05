@@ -1,5 +1,5 @@
 import { NCanvasChart } from './types'
-import { num2sup, closestNumber } from './../utils/index.js'
+import { num2sup, closestNumber, objectDefaults } from './../utils/index.js'
 class CanvasChart {
   public series: NCanvasChart.Series
   public options: NCanvasChart.Options
@@ -26,7 +26,7 @@ class CanvasChart {
     this.colors = colors
     this.series = series
     this.xLabels = xLabels
-    this.options = {
+   /*  this.options = {
       ...options,
       width: options.width || 500,
       height: options.height || 150,
@@ -42,7 +42,23 @@ class CanvasChart {
         serieMargin: options.barChartOptions?.serieMargin || 5,
         stepPadding: options.barChartOptions?.stepPadding || 15,
       },
-    }
+    } */
+    this.options = objectDefaults(options,{
+      width:500,
+      height:150,
+      padding: 10,
+      legendSpace: 50,
+      yLabelSpace:50,
+      drawYlines: true,
+      drawXLines : false,
+      yLabelDigits : 2,
+      lineCount : 8,
+      barChartOptions:{
+        serieMargin:5,
+        stepMargin:15
+      }
+
+    })
     this.longestSerieLength = this.calculateLongestSerie()
     this.highestValue = this.calculateLHighestValue()
     this.canvasElement = document.createElement('canvas')
