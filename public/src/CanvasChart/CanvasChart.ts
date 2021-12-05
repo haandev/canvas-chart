@@ -27,20 +27,20 @@ class CanvasChart {
     this.series = series
     this.xLabels = xLabels
 
-    this.options = objectDefaults(options,{
-      width:500,
-      height:150,
+    this.options = objectDefaults(options, {
+      width: 500,
+      height: 150,
       padding: 10,
       legendSpace: 50,
-      yLabelSpace:50,
+      yLabelSpace: 50,
       drawYlines: true,
-      drawXLines : false,
-      yLabelDigits : 2,
-      lineCount : 8,
-      barChartOptions:{
-        serieMargin:5,
-        stepMargin:15
-      }
+      drawXLines: false,
+      yLabelDigits: 2,
+      lineCount: 8,
+      barChartOptions: {
+        serieMargin: 5,
+        stepMargin: 15,
+      },
     })
     this.longestSerieLength = this.calculateLongestSerie()
     this.highestValue = this.calculateLHighestValue()
